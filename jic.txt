@@ -1,0 +1,510 @@
+
+
+// THIS IS A WORKING LvlGUI CLASS DISPLAYING GRIDS FROM 5 * 5 TO 35 * 35
+
+
+import javax.swing.*;
+import java.awt.event.*;
+import java.awt.*;
+
+
+public class LvlGUI extends JFrame
+{
+	private JLabel pick;
+	private JPanel buttonP;
+	private JButton[] grid;
+	private JButton exit;
+
+	private ImageIcon[] pics;
+
+	private final int WINDOW_WIDTH = 500;
+	private final int WINDOW_HEIGHT = 170;
+
+	public LvlGUI()
+	{
+		setLookAndFeel();
+
+		setTitle("Choose Your Difficulty");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+		setLayout(new BorderLayout());
+
+		buildFrame();
+
+		setVisible(true);
+	}
+
+	public void setLookAndFeel()
+	{
+		try
+		{
+			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+			SwingUtilities.updateComponentTreeUI(this);
+		}
+		catch (Exception e)
+		{
+			JOptionPane.showMessageDialog(null, "Error: Setting look and feel");
+			System.exit(0);
+		}
+	}
+
+	public void buildFrame()
+	{
+		pick = new JLabel("Welcome to Nkem's Nonograms Game!!    Please choose your level of difficulty: ");
+		add(pick, BorderLayout.NORTH);
+
+		buttonP = new JPanel();
+		buttonP.setLayout(new GridLayout(3, 3));
+
+	//	pics = new ImageIcon[7];
+		grid = new JButton[7];
+
+		for (int i = 0; i < 6; i++)
+		{
+			grid[i] = new JButton((5 * (i + 1)) + " by " + (5 * (i + 1)) + " grid");
+			grid[i].addActionListener(new ButtonListener());
+/*			Failed coloring attempt
+			pics[i] = new ImageIcon((i + 1) * 5 + "by" + (i + 1) * 5 + ".png");
+			grid[i] = new JButton(pics[i]);
+			grid[i].setBackground(Color.WHITE);
+			*/
+			buttonP.add(grid[i]);
+		}
+
+		grid[6] = new JButton("35 by 35 grid");
+		grid[6].addActionListener(new ButtonListener());
+
+		buttonP.add(new JLabel());
+		buttonP.add(grid[6]);
+
+		add(buttonP, BorderLayout.CENTER);
+
+		exit = new JButton("Exit");
+		exit.addActionListener(new ExitListener());
+		add(exit, BorderLayout.SOUTH);
+	}
+
+	private class ButtonListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			setVisible(false);
+
+			for (int i = 0; i < 7; i++)
+				if (e.getSource() == grid[i])
+					new NonoGUI((i + 1) * 5);
+		}
+	}
+
+	private class ExitListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			JOptionPane.showMessageDialog(null, "Thanks for playing! Come again! ^_^");
+			System.exit(0);
+		}
+	}
+}
+
+===========================================================================================================================================
+
+/***************************************************************************************************************
+	v. 1.5
+
+	UPDATE:
+	 1. YAY! IT WORKS!!!!!!:D!!:D!!!!!!!!!
+	 2. Better pictures.
+	 3. YAY-er!!! No bugs that I can find!
+	 4. Exit button
+	 5. Check for mistakes button
+	 6. Restart button
+	 7. New puzzle Button
+	 8. Give up/show answer button
+	 9. Better Font.
+	 10. The alignment of the columns over the boxes.
+	 11. Made available to many sizes
+	 12. Changed look and feel
+	 13. 10 * 10, 15 * 15, 20 * 20 grids, etc.
+	 	- a pop-up asking for what size you want
+
+
+	TO ADD:
+	 * Scroll bar!
+
+	 * Add alt + click option to X box
+
+	 * Add lines between 5 * 5 grids in bigger grids (with Graphics?)
+
+	 * Sign in/Guest
+	 	- Save Scores: wins/loses, streaks, Point system?
+	 	- High Score List?
+	 	- Scoring Rules Frame
+
+	 * Add color changer to the menu option
+
+	 * Add shape changer? for X's, fill ins, and empty boxes?
+
+	 * ?? Add to menu: choose size of boxes ??
+
+	 * Help/Instructions frame
+
+	 * Awesome Tutorial?!
+
+	 * ?? Easy, Normal, Hard, Fiendish? Is that possible?
+
+	 * Shoot. Forgot what else I wanted - AUDIO. At least winning sound.
+
+	 * Splash screen? With my logo? That I may have to make in paint. Just to show that I know how to. Though I don't.\
+
+	 * Timer? For just cuz or for harder levels?
+
+	 * Clean up and Comments.
+
+
+	PROBLEMS:
+	 - Get splash screen to work :(
+	 - GOSH DARN SCROLLBAR!!!
+	 - Fix spacing of display numbers for bigger grids
+
+
+****************************************************************************************************************/
+
+
+public class NonoGUI extends JFrame
+{
+	private Setup set;												// Holds an object of the Setup class
+
+	private OptionsMenu optionsMenu;								// Holds an object for the OptionsMenu class
+	private JMenuBar optMenuBar;									// Holds the menu bar for the options menu
+	private JMenuItem restartItem;									// Holds restart button in the file menu
+	private JCheckBoxMenuItem checkItem;							// Holds the check for mistakes button on the help menu
+	private JMenuItem showAnsItem;									// Holds the show answers button in the help menu
+
+	private JPanel westP;											// Holds a left panel for the display numbers
+	private JLabel[] westL;											// Holds the array of number labels that will be displayed
+
+	private JPanel northP;											// Holds a top panel for the display numbers
+	private JLabel[][] northL;										// Holds the array of number labels that will be displayed
+
+	private JPanel gridP;											// Holds the center panel for the grid
+	private JButton[][] gridB;										// Holds an 2D array of each box in the grid
+	private ImageIcon empty;										// Holds an icon of an empty box
+
+	private JScrollBar scroll;
+
+	private ImageIcon filled;										// Holds an icon of a filled in box
+	private ImageIcon X;											// Holds an icon of an Xed out box
+	private int[][] gridClicks;										// Holds an 2D array of each box's clicked status
+	private int total;												// Holds the total number of boxes the user filled in
+
+	private ImageIcon win;											// Holds the winning gif
+
+	private JPanel optionsP;										// Holds the bottom options panel
+	private JButton exit, check, restart, new_game, show, help;		// Holds the buttons for the options panel
+	private ImageIcon red_X, red_filled;							// Holds icons of red filled in and Xed out boxes for mistake checker
+
+	private Font font;												// Holds the font for the display numbers
+
+	private int WINDOW_WIDTH;			;							// Holds the width of the frame
+	private int WINDOW_HEIGHT;										// Holds the height of the frame
+
+	private int lvl;												// Holds 5, 10, etc. the chosen level grid size
+
+
+
+	/* ---------------------------------------------------------------------------------------------------------------------
+	//
+	//	The NonoGUI constructor creates the frame (and states its detail) for the GUI.
+	//	@param level The size of the grid.
+	//
+	// --------------------------------------------------------------------------------------------------------------------- */
+
+	public NonoGUI(int level)
+	{
+		// Passes the size of the grid to the Backwork method.
+		Backwork(level);
+
+		// Sets the details of the frame.
+		setTitle("Nonograms");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+		setLayout(new BorderLayout());
+
+		// Creates and places all of the panels in the frame
+		WestPanel();
+		add(westP, BorderLayout.WEST);
+
+		NorthPanel();
+		add(northP, BorderLayout.NORTH);
+
+		OptionsMenu();
+
+		GridPanel();
+		add(gridP, BorderLayout.CENTER);
+
+		// Sets the frame to visible.
+		setVisible(true);
+	}
+
+	/* ---------------------------------------------------------------------------------------------------------------------
+	//
+	//	The Backwork method sets frame's height and width and the preliminary data for the some of the variables.
+	//	@param level The size of the grid.
+	//
+	// --------------------------------------------------------------------------------------------------------------------- */
+
+	public void Backwork(int level)
+	{
+		setLookAndFeel();
+
+		lvl = level;
+
+		if (lvl == 5)
+		{
+			WINDOW_WIDTH = 280;
+			WINDOW_HEIGHT = 335;
+		}
+		else if (lvl == 10)
+		{
+			WINDOW_WIDTH = 553;
+			WINDOW_HEIGHT = 618;
+		}
+		else if (lvl == 15)
+			WINDOW_WIDTH = 835;
+
+		else if (lvl == 20)
+			WINDOW_WIDTH = 1100;
+		else
+			WINDOW_WIDTH = 1369;
+
+		if (lvl > 10)
+			WINDOW_HEIGHT = 730;
+
+		set = new Setup(lvl);							// Creates an object of the Setup class.
+		set.setInfo();									// Computes and organizes the game solution grid
+		total = 0;
+		gridClicks = new int[lvl][lvl];
+		font = new Font("Courier New", Font.BOLD,  15);	// The font for the display numbers.
+		set.test();										// Prints the solution to the game.
+
+		scroll = new JScrollBar(this.JFrame, Adjustable.VERTICAL);
+		//(this.JFrame, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		//scroll.setWheelScrollingEnabled(true);
+		this.add(scroll);
+	}
+
+	public void setLookAndFeel()
+	{
+		try
+		{
+			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+			SwingUtilities.updateComponentTreeUI(this);
+		}
+		catch (Exception e)
+		{
+			JOptionPane.showMessageDialog(null, "Error: Setting look and feel");
+			System.exit(0);
+		}
+	}
+
+
+	/* ---------------------------------------------------------------------------------------------------------------------
+	//
+	//	The WestPanel method displays the numbers for the rows in the game.
+	//
+	// --------------------------------------------------------------------------------------------------------------------- */
+
+	public void WestPanel()
+	{
+		westP = new JPanel();
+		westP.setLayout(new GridLayout(lvl, 1));
+
+		String[] showRow = set.getRow();
+		westL = new JLabel[lvl];
+
+		for (int i = 0; i < lvl; i++)
+		{
+			westL[i] = new JLabel(showRow[i] + " ", JLabel.RIGHT);
+			westL[i].setFont(font);
+			westP.add(westL[i]);
+		}
+	}
+
+
+	/* ---------------------------------------------------------------------------------------------------------------------
+	//
+	//	The NorthPanel method displays the numbers for the columns in the game. CURRENTLY fixed :D
+	//
+	// --------------------------------------------------------------------------------------------------------------------- */
+
+	public void NorthPanel()
+	{
+		northP = new JPanel();
+		northP.setLayout(new GridLayout((lvl/2) + 1, lvl + 1));
+
+		String[][] temp = new String[lvl][];				// A temporary ragged array of each column's values. Holds the
+
+		northL = new JLabel[(lvl/2) + 1][lvl];
+
+		int rmd = 0;
+
+		for (int i = 0; i < lvl; i++)
+		{
+			temp[i] = set.getCol()[i].split(" ");	// ragged array of the 5 cols
+
+			rmd = ((lvl/2) + 1) - temp[i].length;
+
+			for (int j = 0; j < rmd; j++)
+				northL[j][i] = new JLabel("");
+
+			for (int j = 0; j < temp[i].length; j++)
+			{
+				northL[rmd + j][i] = new JLabel(temp[i][j]);
+				northL[rmd + j][i].setFont(font);
+				northL[rmd + j][i].setHorizontalAlignment(SwingConstants.CENTER);
+			}
+		}
+
+		for (int i = 0; i < ((lvl/2) + 1); i++)
+		{
+			northP.add(new JLabel("          "));
+
+			for (int j = 0; j < lvl; j++)
+				northP.add(northL[i][j]);
+		}
+	}
+
+	public void OptionsMenu()
+	{
+		optionsMenu = new OptionsMenu(lvl);
+		optMenuBar = optionsMenu.getOptionsMenuBar();
+
+		restartItem = optionsMenu.getRestartItem();
+		restartItem.addActionListener(new ButtonListener());
+
+		checkItem = optionsMenu.getCheckItem();
+		checkItem.addActionListener(new ButtonListener());
+
+		showAnsItem = optionsMenu.getShowAnsItem();
+		showAnsItem.addActionListener(new ButtonListener());
+
+		setJMenuBar(optMenuBar);
+	}
+
+
+
+	public void GridPanel()
+	{
+		gridP = new JPanel();
+		gridP.setLayout(new GridLayout(lvl, lvl));
+
+		gridB = new JButton[lvl][lvl];
+
+		empty = new ImageIcon("checkbox_empty.jpg");
+
+		red_filled = new ImageIcon("red_filled.png");
+		red_X = new ImageIcon("red_X.png");
+
+		for (int i = 0; i < lvl; i++)
+		{
+			for (int j = 0; j < lvl; j++)
+			{
+				gridB[i][j] = new JButton(empty);
+				gridB[i][j].setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
+				gridB[i][j].setBackground(Color.WHITE);
+				gridB[i][j].addActionListener(new ButtonListener());
+				gridP.add(gridB[i][j]);
+			}
+		}
+	}
+
+	public void WonMessage()
+	{
+		Random ranNum = new Random();
+		int num = ranNum.nextInt(5);
+		win = new ImageIcon("win" + (num + 1) + ".gif");
+		JOptionPane.showMessageDialog(null, null, "CONGRATULATIONS!!!", 2, win);
+		System.exit(0);
+	}
+
+	private class ButtonListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			boolean correct = false;
+			boolean mistake = false;
+			int score = 0;
+			filled = new ImageIcon("fill1.png");
+			X = new ImageIcon("X1.jpg");
+
+			for (int i = 0; i < lvl; i++)
+			{
+				for (int j = 0; j < lvl; j++)
+				{
+					if ((e.getSource() == gridB[i][j]) && ((gridClicks[i][j] % 3) == 0))
+					{
+						total += 1;
+						gridClicks[i][j] += 1;
+						gridB[i][j].setIcon(filled);
+						//gridB[i][j].setMnemonic(KeyEvent.
+					}
+					else if((e.getSource() == gridB[i][j]) && ((gridClicks[i][j] % 3) == 1))
+					{
+						total -= 1;
+						gridClicks[i][j] += 1;
+						gridB[i][j].setIcon(X);
+					}
+					else if((e.getSource() == gridB[i][j]) && ((gridClicks[i][j] % 3) == 2))
+					{
+						gridClicks[i][j] += 1;
+						gridB[i][j].setIcon(empty);
+					}
+
+					if (e.getSource() == restartItem)
+					{
+						total = 0;
+						gridClicks[i][j] = 0;
+						gridB[i][j].setIcon(empty);
+						score = 0;
+					}
+					if (checkItem.isSelected())
+					{
+						if ((set.getLengths()[i][j] == 1) && (((gridClicks[i][j] % 3) == 2)))
+						{
+							gridB[i][j].setIcon(red_X);
+							mistake = true;
+						}
+						if ((set.getLengths()[i][j] == 0) && (((gridClicks[i][j] % 3) == 1)))
+						{
+							gridB[i][j].setIcon(red_filled);
+							mistake = true;
+						}
+					}
+
+					if (e.getSource() == showAnsItem)
+					{
+						if(set.getLengths()[i][j] == 1)
+							gridB[i][j].setIcon(filled);
+						if(set.getLengths()[i][j] == 0)
+							gridB[i][j].setIcon(X);
+					}
+				}
+			}
+			if (!mistake && (e.getSource() == check))
+				JOptionPane.showMessageDialog(null, "No mistakes.");
+
+
+			if (total == set.getTotal())
+			{
+				for (int i = 0; i < lvl; i++)
+					for (int j = 0; j < lvl; j++)
+						if  (((gridClicks[i][j] % 3) == 1) && (set.getLengths()[i][j] == 1))
+							score += 1;
+				if (score == total)
+					WonMessage();
+				else
+					System.out.print("WRONG  ");
+			}
+		}
+	}
+}
